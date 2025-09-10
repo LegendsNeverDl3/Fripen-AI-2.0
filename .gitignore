@@ -1,0 +1,6 @@
+info_about_webscaffold.md
+app/static/uploads/*
+app/runs/*
+app/yolov5
+.venv
+.env
