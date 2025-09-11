@@ -1,4 +1,4 @@
-FROM python:3.8-slim-buster
+FROM python:3.9-slim
 USER root
 
 # Install system level dependencies
@@ -28,7 +28,7 @@ ADD entrypoint.sh /entrypoint.sh
 ADD config.py /app/config.py
 ADD app/requirements.txt /app/requirements.txt
 ADD get-pip.py /app/get-pip.py
-ADD /app/yolov5 /app/yolov5
+ADD yolov5 /app/yolov5
 ADD /app/best.pt /app/best.pt
 
 

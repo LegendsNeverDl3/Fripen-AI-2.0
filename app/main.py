@@ -497,5 +497,5 @@ def redirect_misc():
 if __name__ == '__main__':
     website_url = 'fripen-ai.onrender.com'
     print(f'Try to open\n\n https://{website_url}' + base_url + '\n\n')
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 80))
     app.run(host='0.0.0.0', port=port, debug=False)
