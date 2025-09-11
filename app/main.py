@@ -247,7 +247,10 @@ import torch
 import shutil
 import logging
 import pandas
+import torch
 from PIL import Image
+
+
 
 # setup the webserver
 port = int(os.environ.get("PORT", 8000))
@@ -274,16 +277,68 @@ app.logger.addHandler(file_handler)
 # Ensure upload directory exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+
+# model = None
 try:
+    # model_path = os.path.join(os.path.dirname(__file__), 'best.pt')
+    # model = torch.hub.load("ultralytics/yolov5", "custom", path=model_path, force_reload=False, trust_repo=True)
+   
     model_path = os.path.join(os.path.dirname(__file__), 'best.pt')
-    model = torch.hub.load("ultralytics/yolov5", "custom", path=model_path, force_reload=False, trust_repo=True)
+    with torch.serialization.safe_globals(['models.yolo.Model']):
+        model = torch.hub.load("ultralytics/yolov5", "custom", path=model_path, force_reload=True, trust_repo=True)
     app.logger.error(f"Successful loading of model!")
     app.logger.error(f"model: {model}")
 except Exception as e:
     app.logger.error(f"Error loading model: {str(e)}")
-
+    
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+
+# @app.route(f'{base_url}', methods=['GET', 'POST'])
+# def home():
+#     if request.method == 'POST':
+#         if 'file' not in request.files:
+#             flash('No file part')
+#             return redirect(request.url)
+#         file = request.files['file']
+#         if file.filename == '':
+#             flash('No selected file')
+#             return redirect(request.url)
+#         if file and allowed_file(file.filename):
+#             filename = secure_filename(file.filename)
+#             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+#             try:
+#                 file.save(file_path)
+#                 return redirect(url_for('uploaded_file', filename=filename))
+#             except Exception as e:
+#                 app.logger.error(f"Error saving file: {str(e)}")
+#                 return "Error saving file"
+#     return render_template('home.html')
+
+# @app.route(f'{base_url}/fripen_index.html', methods=['GET', 'POST'])
+# def fripen_index():
+#     if request.method == 'POST':
+#         if 'file' not in request.files:
+#             flash('No file part')
+#             return redirect(request.url)
+#         file = request.files['file']
+#         if file.filename == '':
+#             flash('No selected file')
+#             return redirect(request.url)
+#         if file and allowed_file(file.filename):
+#             filename = secure_filename(file.filename)
+#             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+#             try:
+#                 file.save(file_path)
+#                 return redirect(url_for('uploaded_file', filename=filename))
+#             except Exception as e:
+#                 app.logger.error(f"Error saving file: {str(e)}")
+#                 return "Error saving file"
+#     return render_template('fripen_index.html')
+
+# This method is saving the original picture
 
 @app.route(f'{base_url}', methods=['GET', 'POST'])
 def home():
@@ -299,12 +354,19 @@ def home():
             filename = secure_filename(file.filename)
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             try:
+                # Remove existing file if present to avoid permission denied errors
+                # if os.path.exists(file_path):
+                #     os.remove(file_path)
+                #     print("no")
+
+                # Save the new uploaded file
                 file.save(file_path)
                 return redirect(url_for('uploaded_file', filename=filename))
             except Exception as e:
                 app.logger.error(f"Error saving file: {str(e)}")
-                return "Error saving file"
+                return "Error saving file nope"
     return render_template('home.html')
+
 
 @app.route(f'{base_url}/fripen_index.html', methods=['GET', 'POST'])
 def fripen_index():
@@ -320,12 +382,18 @@ def fripen_index():
             filename = secure_filename(file.filename)
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             try:
+                # Remove existing file if present
+                # if os.path.exists(file_path):
+                #     os.remove(file_path)
+
+                # Save the uploaded file
                 file.save(file_path)
                 return redirect(url_for('uploaded_file', filename=filename))
             except Exception as e:
                 app.logger.error(f"Error saving file: {str(e)}")
-                return "Error saving file"
+                return "Error saving file yep"
     return render_template('fripen_index.html')
+
 
 @app.route(f'{base_url}/uploads/<filename>')
 def uploaded_file(filename):
@@ -333,12 +401,11 @@ def uploaded_file(filename):
     image_path = os.path.join(here, app.config['UPLOAD_FOLDER'], filename)
     app.logger.debug(f"Current location!: {here}")
     app.logger.debug(f"Image path: {image_path}")
-    
     try:
         results = model(image_path, size=416)
     except Exception as e:
         app.logger.error(f"Error processing image: {str(e)}")
-        return "An error occurred while processing the image."
+        return "An error occurred while processing the image. "
     
     app.logger.debug(f"Ran through results")
     
@@ -347,7 +414,7 @@ def uploaded_file(filename):
         app.logger.debug(f"Image path: {results.print()}")
         app.logger.debug(f"Image path entered into if loop")
         
-        save_dir = os.path.join(here, app.config['UPLOAD_FOLDER'], filename)
+        save_dir = os.path.join(here, app.config['UPLOAD_FOLDER'],filename)
         os.remove(image_path)
         app.logger.debug(f"old image removed")
         results.save(save_dir=save_dir)
