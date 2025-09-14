@@ -4,3 +4,4 @@ app/runs/*
 app/yolov5
 .venv
 .env
+/newVenv
