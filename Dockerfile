@@ -1,9 +1,22 @@
 FROM python:3.9-slim
 USER root
 
+# RUN apt-get update && apt-get install -y prelink
+# RUN execstack -c /usr/local/lib/python3.9/site-packages/torch/lib/libtorch_cpu.so
+
+# RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list \
+#     && echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
+
+COPY requirements.txt /app/
+RUN pip install --upgrade pip setuptools wheel
+RUN pip install -r /app/requirements.txt
+
+
+
+
 # Install system level dependencies
 RUN apt-get update &&\
-    apt-get install\
+    apt-get install -y \
     gcc\
     git-all\
     libsm6\
@@ -17,6 +30,8 @@ RUN apt-get update &&\
     unzip\
     wget\
     zip\
+    libgl1 \
+    libglib2.0-0 \
     -y\
     && apt-get autoremove -y\
     && apt-get clean -y\
@@ -43,5 +58,6 @@ COPY ./app /app
 RUN chmod +x /entrypoint.sh && chmod -R 755 /app
 
 EXPOSE 80
+EXPOSE 9000
 
 CMD  ["/entrypoint.sh"]

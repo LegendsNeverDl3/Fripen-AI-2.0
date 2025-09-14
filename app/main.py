@@ -247,11 +247,10 @@ import torch
 import shutil
 import logging
 import pandas
-import torch
 from PIL import Image
 
 
-
+global_counter = 0
 # setup the webserver
 port = int(os.environ.get("PORT", 8000))
 base_url = get_base_url(port)
@@ -284,8 +283,8 @@ try:
     # model = torch.hub.load("ultralytics/yolov5", "custom", path=model_path, force_reload=False, trust_repo=True)
    
     model_path = os.path.join(os.path.dirname(__file__), 'best.pt')
-    with torch.serialization.safe_globals(['models.yolo.Model']):
-        model = torch.hub.load("ultralytics/yolov5", "custom", path=model_path, force_reload=True, trust_repo=True)
+    # with torch.serialization.safe_globals(['models.yolo.Model']):
+    model = torch.hub.load("ultralytics/yolov5", "custom", path=model_path, force_reload=True, trust_repo=True)
     app.logger.error(f"Successful loading of model!")
     app.logger.error(f"model: {model}")
 except Exception as e:
@@ -342,6 +341,7 @@ def allowed_file(filename):
 
 @app.route(f'{base_url}', methods=['GET', 'POST'])
 def home():
+    global global_counter
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file part')
@@ -353,15 +353,29 @@ def home():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
             try:
                 # Remove existing file if present to avoid permission denied errors
-                # if os.path.exists(file_path):
-                #     os.remove(file_path)
-                #     print("no")
-
+                
+               
+                global_counter += 1
+                ext = os.path.splitext(filename)[1]
+                basename = os.path.splitext(filename)[0]  
+                
+                base = basename[:-1]
+                
+ 
+                new_num = global_counter
+                new_name = f"{base}{new_num}{ext}"
+                # app.logger.error(f"New_Name: {str(new_name)}")
+                new_file_path = os.path.join(app.config['UPLOAD_FOLDER'], new_name)
+                app.logger.error(f"Current File Path: {str(new_file_path)}")
+                file.save(new_file_path)
+                return redirect(url_for('uploaded_file', filename=new_name))                 
+              
                 # Save the new uploaded file
-                file.save(file_path)
-                return redirect(url_for('uploaded_file', filename=filename))
+                # file.save(file_path)
+                # return redirect(url_for('uploaded_file', filename=filename))
             except Exception as e:
                 app.logger.error(f"Error saving file: {str(e)}")
                 return "Error saving file nope"
