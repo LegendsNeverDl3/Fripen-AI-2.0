@@ -58,6 +58,5 @@ COPY ./app /app
 RUN chmod +x /entrypoint.sh && chmod -R 755 /app
 
 EXPOSE 80
-EXPOSE 9000
 
 CMD  ["/entrypoint.sh"]
