@@ -260,6 +260,8 @@ if base_url == '/':
 else:
     app = Flask(__name__, static_url_path=base_url+'static')
 
+app.secret_key = os.environ.get("SECRET_KEY", "asljd54h489gksjSADg2DSA!#$rFF")
+
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -278,17 +280,25 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 # model = None
-try:
-    # model_path = os.path.join(os.path.dirname(__file__), 'best.pt')
-    # model = torch.hub.load("ultralytics/yolov5", "custom", path=model_path, force_reload=False, trust_repo=True)
+# try:
+#     # model_path = os.path.join(os.path.dirname(__file__), 'best.pt')
+#     # model = torch.hub.load("ultralytics/yolov5", "custom", path=model_path, force_reload=False, trust_repo=True)
    
+#     model_path = os.path.join(os.path.dirname(__file__), 'best.pt')
+#     # with torch.serialization.safe_globals(['models.yolo.Model']):
+#     model = torch.hub.load("ultralytics/yolov5", "custom", path=model_path, force_reload=True, trust_repo=True)
+#     app.logger.error(f"Successful loading of model!")
+#     app.logger.error(f"model: {model}")
+# except Exception as e:code
+#     app.logger.error(f"Error loading model: {str(e)}")
+try:
     model_path = os.path.join(os.path.dirname(__file__), 'best.pt')
-    # with torch.serialization.safe_globals(['models.yolo.Model']):
-    model = torch.hub.load("ultralytics/yolov5", "custom", path=model_path, force_reload=True, trust_repo=True)
-    app.logger.error(f"Successful loading of model!")
-    app.logger.error(f"model: {model}")
+    yolo_dir = '/app/yolov5' if os.path.exists('/app/yolov5') else 'yolov5'
+    model = torch.hub.load(yolo_dir, 'custom', path=model_path, source='local')
+    app.logger.info("Successful loading of model!")
 except Exception as e:
     app.logger.error(f"Error loading model: {str(e)}")
+    raise e
     
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS

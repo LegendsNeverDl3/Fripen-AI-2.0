@@ -56,8 +56,8 @@ RUN python3 /app/get-pip.py \
 # Copy the app to be used when starting the Docker container and set permissions
 COPY ./app /app
 RUN chmod +x /entrypoint.sh && chmod -R 755 /app
+RUN rm -rf /root/.cache/torch/hub/*
 
 EXPOSE 80
-EXPOSE 9000
 
 CMD  ["/entrypoint.sh"]
